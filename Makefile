@@ -1,6 +1,6 @@
-UK_ROOT ?= /home/strynzha/.unikraft/unikraft
-UK_LIBS ?= /home/strynzha/.unikraft/libs
-LIBS := $(UK_LIBS)/libnewlib
+UK_ROOT ?= $(PWD)/../../unikraft
+UK_LIBS ?= $(PWD)/../../libs
+LIBS := $(UK_LIBS)/newlib
 
 all:
 	@$(MAKE) -C $(UK_ROOT) A=$(PWD) L=$(LIBS)

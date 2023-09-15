@@ -15,6 +15,7 @@ run:
 build-linux:
     mkdir -p fs_linux
     gcc -Wall \
+        -O2 \
         src/main.c \
         src/helper_functions.c \
         src/measurement_scenarios.c \

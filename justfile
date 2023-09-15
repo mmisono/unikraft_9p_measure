@@ -22,3 +22,26 @@ build-linux:
         src/scenario_runners.c \
         src/time_functions.c \
         -lm -o fs_measure
+
+build-linux-static:
+    gcc -Wall \
+        -O2 \
+        -static \
+        src/main.c \
+        src/helper_functions.c \
+        src/measurement_scenarios.c \
+        src/scenario_runners.c \
+        src/time_functions.c \
+        -lm -o fs_measure_static
+
+build-linux-static-debug:
+    gcc -Wall \
+        -DDEBUGMODE \
+        -O2 \
+        -static \
+        src/main.c \
+        src/helper_functions.c \
+        src/measurement_scenarios.c \
+        src/scenario_runners.c \
+        src/time_functions.c \
+        -lm -o fs_measure_static_debug

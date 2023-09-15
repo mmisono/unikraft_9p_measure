@@ -37,7 +37,7 @@ __nanosec create_files(FILES amount) {
 	for (FILES i = 0; i < amount; i++) {
 		FILE *file = fopen(file_names + i * max_file_name_length, "w");
 	    if (file == NULL) {
-            fprintf(stderr, "Error creating file number %lu.\n", i);
+            fprintf(stderr, "%s: Error creating file number %lu.\n", __func__, i);
             exit(EXIT_FAILURE);
         }
 		#ifdef __linux__
@@ -54,7 +54,7 @@ __nanosec create_files(FILES amount) {
 	for (FILES i = 0; i < amount; i++) {
 		char *file_name = file_names + i * max_file_name_length;
 		if (remove(file_name) != 0) {
-			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
+			fprintf(stderr, "%s: Failed to remove \"%s\" file\n", __func__, file_name);
 		}
 	}
     chdir("..");
@@ -89,7 +89,7 @@ __nanosec remove_files(FILES amount) {
 	for (FILES i = 0; i < amount; i++) {
 		FILE *file = fopen(file_names + i*max_file_name_length, "w");
 	    if (file == NULL) {
-            fprintf(stderr, "Error creating file number %lu.\n", i);
+            fprintf(stderr, "%s: Error creating file number %lu.\n", __func__, i);
             exit(EXIT_FAILURE);
         }
 		fclose(file);
@@ -107,7 +107,7 @@ __nanosec remove_files(FILES amount) {
 	for (FILES i = 0; i < amount; i++) {
 		char *file_name = file_names + i * max_file_name_length;
 		if (remove(file_name) != 0) {
-			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
+			fprintf(stderr, "%s: Failed to remove \"%s\" file\n", __func__, file_name);
 		}
 		#ifdef __linux__
 		sync();
@@ -141,7 +141,7 @@ __nanosec list_dir(FILES file_amount) {
 	struct dirent *ep;
 	dp = opendir ("./");
     if (dp == NULL) {
-		fprintf(stderr, "Couldn't open the directory\n");
+		fprintf(stderr, "%s: Couldn't open the directory\n", __func__);
     }
 
 	char str[256];
@@ -178,20 +178,20 @@ static inline size_t write_9p(int fd, char *buffer, BYTES buffer_size)
 	for (BYTES i = 0; i < iterations; i++) {
 		rc = write(fd, buffer, buff_limit_9p);
 		if (unlikely(rc != buff_limit_9p)) {
-			fprintf(stderr, "Failed to write\n\
+			fprintf(stderr, "%s: Failed to write\n\
 					rc = %llu\n\
 					buffer = %lu\n",
-					rc, buff_limit_9p);
+					__func__, rc, buff_limit_9p);
 		}
 		bytes_written += rc;
 	}
 	if (rest > 0) {
 		rc = write(fd, buffer, rest);
 		if (unlikely(rc != rest)) {
-			fprintf(stderr, "Failed to write the rest\n\
+			fprintf(stderr, "%s: Failed to write the rest\n\
 					rc = %llu\n\
 					buffer = %llu\n",
-					rc, rest);;
+					__func__, rc, rest);;
 		}
 		bytes_written += rc;
 	}
@@ -211,20 +211,20 @@ static inline size_t read_9p(int fd, char *buffer, BYTES buffer_size)
 	for (BYTES i = 0; i < iterations; i++) {
 		rc = read(fd, buffer, buff_limit_9p);
 		if (unlikely(rc != buff_limit_9p)) {
-			fprintf(stderr, "Failed to read\n\
+			fprintf(stderr, "%s: Failed to read\n\
 					rc = %llu\n\
 					buffer = %lu\n",
-					rc, buff_limit_9p);;
+					__func__, rc, buff_limit_9p);;
 		}
 		bytes_read += rc;
 	}
 	if (rest > 0) {
 		rc = read(fd, buffer, rest);
 		if (unlikely(rc != rest)) {
-			fprintf(stderr, "Failed to read the rest\n\
+			fprintf(stderr, "%s: Failed to read the rest\n\
 					rc = %llu\n\
 					buffer = %llu\n",
-					rc, rest);;
+					__func__, rc, rest);
 		}
 		bytes_read += rc;
 	}
@@ -245,9 +245,14 @@ __nanosec write_seq(int fd, BYTES bytes, BYTES buffer_size) {
 	BYTES rc;
 	#endif /* __linux__ */
 
+	#ifdef __linux__
+	char *buffer;
+	posix_memalign(&buffer, 4096, buffer_size);
+	#else
 	char *buffer = malloc(buffer_size);
+	#endif
 	if (buffer == NULL) {
-		fprintf(stderr, "Error! Memory not allocated.\n");
+		fprintf(stderr, "%s: Error! Memory not allocated.\n", __func__);
 		exit(0);
 	}
 	BYTES iterations = bytes / buffer_size;
@@ -260,7 +265,8 @@ __nanosec write_seq(int fd, BYTES bytes, BYTES buffer_size) {
 		#ifdef __linux__
 		rc = write(fd, buffer, buffer_size);
 		if (unlikely(rc != buffer_size)) {
-			fprintf(stderr, "Failed to write\n");
+			fprintf(stderr, "%s: Failed to write: %d, %d, %lld, %lld\n", __func__, i, fd, rc, buffer_size);
+			break;
 		}
 		#elif __Unikraft__
 		write_9p(fd, buffer, buffer_size);
@@ -270,7 +276,7 @@ __nanosec write_seq(int fd, BYTES bytes, BYTES buffer_size) {
 		#ifdef __linux__
 		rc = write(fd, buffer, rest);
 		if (unlikely(rc != rest)) {
-			fprintf(stderr, "Failed to write the rest of the file\n");
+			fprintf(stderr, "%s: Failed to write the rest of the file\n", __func__);
 		}
 		#elif __Unikraft__
 		write_9p(fd, buffer, rest);
@@ -313,7 +319,7 @@ __nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
 
 	char *buffer = malloc(buffer_size);
 	if (buffer == NULL) {
-		fprintf(stderr, "Error! Memory not allocated. At %s, line %d. \n", __FILE__, __LINE__);
+		fprintf(stderr, "%s: Error! Memory not allocated. At %s, line %d. \n", __func__, __FILE__, __LINE__);
 		exit(EXIT_FAILURE);
 	}
 	memset(buffer, '1', buffer_size);
@@ -337,7 +343,9 @@ __nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
 			#ifdef __linux__
 			rc = write(fd, buffer, buffer_size);
 			if (unlikely(rc != buffer_size)) {
-				fprintf(stderr, "Failed to write\n");
+				fprintf(stderr, "%s: Failed to write: %i, %d, %lld, %lld\n", __func__, j, fd, rc, buffer_size);
+				perror(NULL);
+				break;
 			}
 			#elif __Unikraft__
 			write_9p(fd, buffer, buffer_size);
@@ -347,7 +355,7 @@ __nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
 			#ifdef __linux__
 			rc = write(fd, buffer, rest);
 			if (unlikely(rc != rest)) {
-				fprintf(stderr, "Failed to write the rest of the file\n");
+				fprintf(stderr, "%s: Failed to write the rest of the file\n", __func__);
 			}
 			#elif __Unikraft__
 			write_9p(fd, buffer, rest);
@@ -376,7 +384,12 @@ __nanosec read_seq(int fd, BYTES bytes, BYTES buffer_size)
 	BYTES iterations = bytes / buffer_size;
 	BYTES rest = bytes % buffer_size;
 
+	#ifdef __linux__
+	char *buffer;
+	posix_memalign(&buffer, 4096, buffer_size);
+	#else
 	char *buffer = malloc(buffer_size);
+	#endif
 	if (buffer == NULL) {
 		fprintf(stderr, "Error! Memory not allocated. At %s, line %d. \n", __FILE__, __LINE__);
 		exit(EXIT_FAILURE);
@@ -390,7 +403,9 @@ __nanosec read_seq(int fd, BYTES bytes, BYTES buffer_size)
 		#ifdef __linux__
 		rc = read(fd, buffer, buffer_size);
 		if (unlikely(rc != buffer_size)) {
-			fprintf(stderr, "Failed to write\n");
+			fprintf(stderr, "%s: Failed to read: %d, %d, %lld, %lld\n", __func__, i, fd, rc, buffer_size);
+			perror(NULL);
+			break;
 		}
 		#elif __Unikraft__
 		read_9p(fd, buffer, buffer_size);
@@ -400,7 +415,7 @@ __nanosec read_seq(int fd, BYTES bytes, BYTES buffer_size)
 		#ifdef __linux__
 		rc = read(fd, buffer, rest);
 		if (unlikely(rc != rest)) {
-			fprintf(stderr, "Failed to write the rest of the file\n");
+			fprintf(stderr, "%s: Failed to write the rest of the file\n", __func__);
 		}
 		#elif __Unikraft__
 		read_9p(fd, buffer, rest);
@@ -463,7 +478,9 @@ __nanosec read_randomly(int fd, BYTES size, BYTES buffer_size,
 			#ifdef __linux__
 			rc = read(fd, buffer, buffer_size);
 			if (unlikely(rc != buffer_size)) {
-				fprintf(stderr, "Failed to write\n");
+				fprintf(stderr, "%s: Failed to read: %i, %d, %lld, %lld\n", __func__, i, fd, rc, buffer_size);
+				perror(NULL);
+				break;
 			}
 			#elif __Unikraft__
 			read_9p(fd, buffer, buffer_size);
@@ -473,7 +490,7 @@ __nanosec read_randomly(int fd, BYTES size, BYTES buffer_size,
 			#ifdef __linux__
 			rc = read(fd, buffer, rest);
 			if (unlikely(rc != rest)) {
-				fprintf(stderr, "Failed to write the rest of the file\n");
+				fprintf(stderr, "%s: Failed to read the rest of the file\n", __func__);
 			}
 			#elif __Unikraft__
 			read_9p(fd, buffer, rest);

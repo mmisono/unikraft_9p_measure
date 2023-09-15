@@ -189,13 +189,17 @@ int main(int argc, char *argv[])
 	DEBUG_PRINT("Running on %s\n", platform);
 	DEBUG_PRINT("__________________________\n");
 
-	int measurements = 5;
-
 #ifdef DEBUGMODE
-	measurements = 1;
+	int measurements = 1;
+#else
+	int measurements = 5;
 #endif
 
-	BYTES buffer_size_arr[] = {4096, 8192, 16384, 32768, 65536, 131072, 262144};
+#ifdef DEBUGMODE
+	BYTES buffer_size_arr[] = {4096};
+#else
+	BYTES buffer_size_arr[] = {4096, 8192, 16384, 32768, 65536};
+#endif
 	int arr_size = sizeof(buffer_size_arr) / sizeof(buffer_size_arr[0]);
 	BYTES bytes_arr[arr_size];
 	BYTES interval_len_arr[arr_size];
@@ -216,12 +220,14 @@ int main(int argc, char *argv[])
 	}
 
 	write_seq_runner(filename, bytes_arr, buffer_size_arr, arr_size, measurements);
+	read_seq_runner(filename, bytes_arr, buffer_size_arr, arr_size, measurements);
+
+#if 0
 	write_randomly_runner(filename, bytes_arr,
 			buffer_size_arr, interval_len_arr, arr_size,
 			measurements);
-
-	read_seq_runner(filename, bytes_arr, buffer_size_arr, arr_size, measurements);
 	read_randomly_runner(filename, bytes_arr, buffer_size_arr, interval_len_arr, arr_size, measurements);
+#endif
 
 	return 0;
 }

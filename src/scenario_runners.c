@@ -239,6 +239,7 @@ void write_seq_runner(const char *filename, BYTES *bytes_arr, BYTES *buffer_size
     int fd = open(filename, O_WRONLY | O_CREAT | O_DIRECT);
     #else // linux
     int fd = open(filename, O_WRONLY | O_CREAT | O_DIRECT, 0644);
+    // int fd = open(filename, O_WRONLY | O_CREAT, 0644);
     #endif
     if (fd == -1) {
         fprintf(stderr, "Error opening file 'write_data: %s'.\n", filename);
@@ -407,6 +408,7 @@ void read_seq_runner(const char *filename, BYTES *bytes_arr,
     BYTES *buffer_size_arr, size_t arr_size, int measurements) {
 
     int fd = open(filename, O_RDONLY | O_DIRECT);
+    // int fd = open(filename, O_RDONLY);
     if (fd == -1) {
         fprintf(stderr, "Error opening file '%s'.\n", filename);
         exit(EXIT_FAILURE);

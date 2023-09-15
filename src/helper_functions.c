@@ -71,7 +71,9 @@ void write_bytes(FILE *file, BYTES bytes, BYTES buffer_size)
 	while (bytes >= buffer_size) {
 		rc = write(fd, buffer, buffer_size);
 		if (rc < 0) {
-			puts("Failed to write\n");
+			printf("Failed to write: %d\n", rc);
+			free(buffer);
+			return;
 		}
 		// if (buffer_size != fwrite(buffer, 1, (size_t) buffer_size, file)) {
 		// 	puts("Failed to write\n");
